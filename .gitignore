@@ -1,0 +1,12 @@
+*.env
+.env
+/pycache
+/venv
+/env
+*.pycache
+*.pyc
+*.log
+*.pyc
+/pycache
+__pycache__
+/__pycache__
