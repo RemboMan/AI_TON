@@ -1,0 +1,47 @@
+"""
+DeDust DEX Integration Guide
+
+DeDust is a native DEX on TON. To implement real swaps:
+
+1. Install additional dependencies:
+   pip install pytoniq-core
+
+2. Understand DeDust architecture:
+   - Factory: Creates pools
+   - Vault: Holds liquidity
+   - Router: Routes swaps
+
+3. Key addresses (mainnet):
+   - Factory: EQBfBWT7X2BHg9tXAxzhz2aKiNTU1tpt5NsiK0uSDW_YAJ67
+   - Native Vault: EQDa4VOnTYlLvDJ0gZjNYm5PXfSmmtL6Vs6A_CZEtXCNICq_
+
+4. Swap flow:
+   a) Build swap message with:
+      - Pool address
+      - Amount
+      - Min output amount (slippage protection)
+
+   b) Send TON to vault with swap payload
+
+   c) Vault executes swap and sends tokens back
+
+5. Example swap payload structure:
+   {
+       "op": 0x9c610de3,  # Swap operation code
+       "query_id": 0,
+       "amount": amount_in_nanotons,
+       "to_address": recipient_address,
+       "min_out": minimum_output_amount
+   }
+
+6. Resources:
+   - DeDust Docs: https://docs.dedust.io
+   - DeDust SDK: https://github.com/dedust-io/sdk
+   - API: https://api.dedust.io/v2/
+
+⚠️ IMPORTANT:
+- Always test on testnet first
+- Use slippage protection (min_out parameter)
+- Check pool liquidity before large trades
+- Monitor gas fees
+"""

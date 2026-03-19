@@ -1,0 +1,67 @@
+"""
+STON.fi DEX Integration Guide
+
+STON.fi is a popular AMM DEX on TON. To implement real swaps:
+
+1. Key addresses (mainnet):
+   - Router V1: EQB3ncyBUTjZUA5EnFKR5_EnOMI9V1tTEAAPaiU71gc4TiUt
+   - Router V2: EQCM3B12QK1e4yZSf8GtBRT0aLMNyEsBc_DhVfRRtOEffLez
+
+2. Swap flow:
+   a) Get pool address for token pair
+   b) Calculate expected output amount
+   c) Build swap message
+   d) Send transaction to router
+
+3. Swap message structure:
+   - Operation: SWAP_TON_TO_JETTON or SWAP_JETTON_TO_TON
+   - Parameters:
+     * token_wallet: Jetton wallet address
+     * min_out: Minimum output (slippage)
+     * to_address: Recipient
+     * referral_address: Optional referral
+
+4. Using STON.fi SDK (recommended):
+   ```python
+   from ston_fi import Client, SwapParams
+
+   client = Client()
+
+   # Get router
+   router = client.get_router()
+
+   # Build swap
+   swap_tx = router.build_swap_ton_to_jetton_tx(
+       user_wallet_address=wallet_address,
+       offer_jetton_address=TON_ADDRESS,
+       ask_jetton_address=USDT_ADDRESS,
+       offer_amount=amount,
+       min_ask_amount=min_output
+   )
+
+   # Send transaction
+   await wallet.send_transaction(swap_tx)
+   ```
+
+5. API endpoints:
+   - Pools: https://api.ston.fi/v1/pools
+   - Assets: https://api.ston.fi/v1/assets
+   - Swap simulation: https://api.ston.fi/v1/swap/simulate
+
+6. Important considerations:
+   - Check pool reserves before swap
+   - Use price impact calculation
+   - Set appropriate slippage (0.5-1% typical)
+   - Monitor for MEV/frontrunning on large trades
+
+7. Resources:
+   - STON.fi Docs: https://docs.ston.fi
+   - API Docs: https://docs.ston.fi/docs/api
+   - SDK: https://github.com/ston-fi/sdk
+
+⚠️ SAFETY:
+- Always simulate swap first
+- Use deadline parameter
+- Verify token addresses
+- Test with small amounts first
+"""
