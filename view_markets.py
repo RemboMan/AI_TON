@@ -1,19 +1,19 @@
 import asyncio
 from market_data import MarketData
-import json
+
 
 async def view_markets():
     """View current market data from DEXes"""
-    print("📊 TON DEX Market Overview\n")
-    print("="*80)
+    print("TON DEX Market Overview\n")
+    print("=" * 80)
 
     market = MarketData()
     await market.init_session()
 
     try:
         # Get DeDust pools
-        print("\n🔷 DeDust Pools:")
-        print("-"*80)
+        print("\n[DeDust Pools]")
+        print("-" * 80)
         dedust_pools = await market.get_dedust_pools()
 
         if dedust_pools:
@@ -25,8 +25,8 @@ async def view_markets():
             print("   No pools data available")
 
         # Get STON.fi pools
-        print("\n\n🔶 STON.fi Pools:")
-        print("-"*80)
+        print("\n\n[STON.fi Pools]")
+        print("-" * 80)
         stonfi_pools = await market.get_stonfi_pools()
 
         if stonfi_pools:
@@ -38,14 +38,15 @@ async def view_markets():
         else:
             print("   No pools data available")
 
-        print("\n" + "="*80)
-        print(f"\n✅ Total DeDust pools: {len(dedust_pools)}")
-        print(f"✅ Total STON.fi pools: {len(stonfi_pools)}")
+        print("\n" + "=" * 80)
+        print(f"\n[OK] Total DeDust pools: {len(dedust_pools)}")
+        print(f"[OK] Total STON.fi pools: {len(stonfi_pools)}")
 
     except Exception as e:
-        print(f"\n❌ Error fetching market data: {e}")
+        print(f"\n[X] Error fetching market data: {e}")
     finally:
         await market.close_session()
+
 
 if __name__ == "__main__":
     asyncio.run(view_markets())

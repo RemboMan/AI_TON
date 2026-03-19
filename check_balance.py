@@ -1,6 +1,6 @@
 import asyncio
 from wallet import TonWallet
-import config
+
 
 async def check_balance():
     """Quick script to check wallet balance"""
@@ -20,6 +20,7 @@ async def check_balance():
 
     except Exception as e:
         print(f"[X] Error: {e}")
+
 
 if __name__ == "__main__":
     asyncio.run(check_balance())
