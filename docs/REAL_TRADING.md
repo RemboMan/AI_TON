@@ -103,13 +103,11 @@ ENABLE_REAL_TRADING=false
 ### API Configuration:
 
 Бот использует Kiro.cheap API для Claude:
-- Base URL: https://api.kiro.cheap (БЕЗ /v1!)
+- Base URL: https://api.kiro.cheap
 - Model: claude-sonnet-4-5-20250514
 - Max tokens: 2048
 
 Убедитесь что ваш API ключ начинается с `sk-aw-`
-
-**ВАЖНО**: SDK автоматически добавляет `/v1` к base URL, поэтому указывайте только `https://api.kiro.cheap`
 
 ---
 
