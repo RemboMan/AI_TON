@@ -61,9 +61,9 @@ class DEXHandler:
                 .end_cell()
             )
 
-            # Send to jetton wallet with 0.3 TON for gas
+            # Send to jetton wallet with 0.5 TON total (0.25 forward + 0.25 jetton wallet gas)
             await self.wallet.send_transaction(
-                destination=jetton_wallet, amount=0.3, payload=transfer_payload
+                destination=jetton_wallet, amount=0.5, payload=transfer_payload
             )
 
             return True
@@ -100,8 +100,17 @@ class DEXHandler:
             )
 
             # get_assets returns: [reserve0, reserve1]
-            reserve0 = int(result[0])
-            reserve1 = int(result[1])
+            # Handle both int and Slice types
+            if isinstance(result[0], int):
+                reserve0 = result[0]
+            else:
+                # It's a Slice, load coins (VarUInteger 16)
+                reserve0 = result[0].load_coins()
+
+            if isinstance(result[1], int):
+                reserve1 = result[1]
+            else:
+                reserve1 = result[1].load_coins()
 
             return (reserve0, reserve1)
         except Exception as e:
@@ -322,7 +331,7 @@ class DEXHandler:
                 begin_cell()
                 .store_uint(0, 32)  # deadline
                 .store_address(self.wallet.wallet.address)  # recipient
-                .store_uint(0, 2)  # referral address (addr_none)
+                .store_address(None)  # referral address (addr_none)
                 .store_uint(0, 1)  # fulfill payload
                 .store_uint(0, 1)  # reject payload
                 .end_cell()
@@ -345,7 +354,7 @@ class DEXHandler:
             print(f"[SWAP] Selling {token_amount} {sell_token} for TON on DeDust...")
             print(f"       Pool: {pool_address}")
             print(f"       Jetton wallet: {jetton_wallet}")
-            print("       Gas: 0.3 TON")
+            print("       Gas: 0.5 TON (0.3 forward + 0.2 jetton wallet)")
 
             # Send jetton transfer with swap payload
             # This will transfer tokens to the vault and trigger the swap
@@ -353,7 +362,7 @@ class DEXHandler:
                 jetton_wallet=jetton_wallet,
                 amount=token_amount_nano,
                 destination="EQDa4VOnTYlLvDJ0gZjNYm5PXfSmmtL6Vs6A_CZEtXCNICq_",  # Native vault
-                forward_amount=int(0.3 * 1e9),  # Forward 0.3 TON for gas
+                forward_amount=int(0.3 * 1e9),  # Forward 0.3 TON for swap gas
                 forward_payload=swap_payload,
             )
 
