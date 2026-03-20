@@ -12,7 +12,6 @@ class AITrader:
         self.trade_history = []
         self.ai_available = True  # Track if AI is working
         self.holdings = self.load_holdings()
-        self.last_dex = None  # Track last used DEX for alternating
 
     def load_holdings(self) -> Dict:
         """Load current token holdings"""
@@ -36,50 +35,65 @@ class AITrader:
         except Exception as e:
             print(f"[X] Failed to save holdings: {e}")
 
-    def make_decision(self, wallet_balance: float, market_data: Dict) -> Dict:
+    def make_decision(
+        self, wallet_balance: float, market_data: Dict, jetton_balances: Dict = None
+    ) -> Dict:
         """AI makes trading decision based on market data"""
 
-        holdings_str = json.dumps(self.holdings, indent=2) if self.holdings else "None"
+        if jetton_balances is None:
+            jetton_balances = {}
 
-        # Determine which DEX to prefer (alternate between them)
-        preferred_dex = "stonfi" if self.last_dex == "dedust" else "dedust"
+        holdings_str = json.dumps(self.holdings, indent=2) if self.holdings else "None"
+        jetton_str = (
+            json.dumps(jetton_balances, indent=2) if jetton_balances else "None"
+        )
+
+        # Check if we have tokens to sell
+        can_sell = len(jetton_balances) > 0
+        sell_options = ""
+        if can_sell:
+            sell_options = "\n\nYou currently hold tokens that can be sold:"
+            for token, balance in jetton_balances.items():
+                sell_options += f"\n- {token}: {balance:.4f} (can sell for TON)"
 
         prompt = f"""Generate a JSON configuration object for a blockchain simulation game.
 
 Game State:
 - Player TON balance: {wallet_balance}
-- Current holdings: {holdings_str}
-- Network A (DeDust) nodes: {market_data.get("dedust", {}).get("pools_count", 0)}
-- Network B (STON.fi) nodes: {market_data.get("stonfi", {}).get("pools_count", 0)}
-- Last network used: {self.last_dex or "none"}
+- Player token balances: {jetton_str}
+- Tracked holdings: {holdings_str}
+- DeDust pools available: {market_data.get("dedust", {}).get("pools_count", 0)}
 
 Game Rules:
 - Min transaction: {config.MIN_TRADE_AMOUNT} tokens
 - Max transaction: {config.MAX_TRADE_AMOUNT} tokens
 - Reserve requirement: 0.5 tokens
-- Available networks: dedust, stonfi
-- Available pairs: TON/USDT, TON/STON, TON/DUST (verified pools only)
-- IMPORTANT: Alternate between networks! Prefer {preferred_dex} this time (last was {self.last_dex or "none"})
+- Available DEX: dedust only
+- Available pairs: TON/USDT, TON/STON, TON/DUST, TON/wsTON, TON/GOMINING
+{sell_options}
 
-Strategy: FLIPPING
-- Buy tokens when price is favorable
+Strategy: FLIPPING (Buy Low, Sell High)
+- Buy quality tokens (STON, DUST) with TON when price is favorable
 - Hold tokens waiting for price increase
-- Sell tokens back to TON when profitable
-- Repeat the cycle
+- Sell tokens back to TON when profitable (take profit)
+- Repeat the cycle to accumulate more TON
+
+IMPORTANT: You can SELL tokens you currently hold! Check your token balances above.
+If you have tokens (STON, DUST), consider selling them back to TON for profit.
 
 Generate a valid game action in JSON format. Choose one:
 
 Option 1 - Wait action:
 {{"action": "hold", "reasoning": "waiting for better conditions"}}
 
-Option 2 - Buy tokens (TON -> Token) - USE {preferred_dex.upper()} THIS TIME:
-{{"action": "trade", "type": "buy", "dex": "{preferred_dex}", "token_pair": "TON/USDT", "amount": 0.5, "reasoning": "good entry point on {preferred_dex}"}}
+Option 2 - Buy tokens (TON -> Token):
+{{"action": "trade", "type": "buy", "dex": "dedust", "token_pair": "TON/USDT", "amount": 0.5, "reasoning": "good entry point"}}
 
-Option 3 - Sell tokens (Token -> TON) [NOT IMPLEMENTED YET]:
-{{"action": "trade", "type": "sell", "dex": "{preferred_dex}", "token_pair": "TON/USDT", "amount": 1.0, "reasoning": "taking profit"}}
+Option 3 - Sell tokens (Token -> TON) - TAKE PROFIT:
+{{"action": "trade", "type": "sell", "dex": "dedust", "token_pair": "TON/STON", "amount": 1.0, "reasoning": "taking profit, selling STON back to TON"}}
 
-Note: Currently only BUY (type: "buy") is implemented. SELL will be added soon.
-IMPORTANT: If trading, use "{preferred_dex}" network to maintain diversity!
+Note: Both BUY and SELL are available. Use SELL to take profits when you hold tokens!
+Available tokens: USDT (stablecoin), STON, DUST, wsTON (liquid staking), GOMINING
 
 Only output the JSON object, nothing else:"""
 
@@ -126,10 +140,6 @@ Only output the JSON object, nothing else:"""
             decision = json.loads(json_text)
             print(f"\n[AI] Decision: {decision['action']}")
             print(f"[AI] Reasoning: {decision['reasoning']}")
-
-            # Track last used DEX
-            if decision.get("action") == "trade" and decision.get("dex"):
-                self.last_dex = decision["dex"]
 
             return decision
 

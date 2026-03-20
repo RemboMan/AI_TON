@@ -37,13 +37,23 @@ class TonAIBot:
         print(f"{'=' * 60}")
 
         try:
-            # Get wallet balance
-            balance = await self.wallet.get_balance()
-            print(f"[BALANCE] Current balance: {balance:.4f} TON")
+            # Get all balances (TON + jettons)
+            all_balances = await self.wallet.get_all_balances()
+            ton_balance = all_balances.get("TON", 0)
+
+            print(f"[BALANCE] TON: {ton_balance:.4f}")
+
+            # Show jetton balances if any
+            jetton_balances = {
+                k: v for k, v in all_balances.items() if k != "TON" and v > 0
+            }
+            if jetton_balances:
+                for token, balance in jetton_balances.items():
+                    print(f"          {token}: {balance:.4f}")
 
             # Check if balance is valid
-            if balance <= 0:
-                print("[!] Balance is 0 or unavailable, skipping cycle")
+            if ton_balance <= 0:
+                print("[!] TON balance is 0 or unavailable, skipping cycle")
                 return
 
             # Show current holdings
@@ -54,9 +64,11 @@ class TonAIBot:
             print("[MARKET] Fetching market data...")
             market_overview = await self.market_data.get_market_overview()
 
-            # AI makes decision
+            # AI makes decision (pass all balances)
             print("[AI] Analyzing market...")
-            decision = self.ai_trader.make_decision(balance, market_overview)
+            decision = self.ai_trader.make_decision(
+                ton_balance, market_overview, jetton_balances
+            )
 
             if decision.get("ai_failed"):
                 print("[X] AI failed to make decision, skipping cycle")
@@ -75,7 +87,7 @@ class TonAIBot:
                         "dex": decision.get("dex"),
                         "token_pair": decision.get("token_pair"),
                         "amount": decision.get("amount"),
-                        "balance_before": balance,
+                        "balance_before": ton_balance,
                     }
                     self.ai_trader.record_trade(trade_record)
                     self.trade_logger.log_trade(trade_record)

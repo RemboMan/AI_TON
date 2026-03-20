@@ -79,6 +79,66 @@ class TonWallet:
                     print(f"[!] Error getting balance: {e}")
                     return 0.0
 
+    async def get_jetton_balance(
+        self, jetton_master: str, token_name: str = None
+    ) -> float:
+        """Get balance of a specific jetton"""
+        try:
+            from pytoniq_core import begin_cell
+
+            # Get jetton wallet address for this user
+            payload = begin_cell().store_address(self.wallet.address).end_cell()
+
+            result = await self.client.run_get_method(
+                address=jetton_master,
+                method="get_wallet_address",
+                stack=[payload.begin_parse()],
+            )
+
+            jetton_wallet_address = result[0].load_address()
+
+            # Get balance from jetton wallet
+            balance_result = await self.client.run_get_method(
+                address=jetton_wallet_address.to_str(),
+                method="get_wallet_data",
+                stack=[],
+            )
+
+            # get_wallet_data returns: balance, owner, jetton_master, jetton_wallet_code
+            balance = balance_result[0]
+
+            # Adjust for token decimals
+            if token_name == "USDT":
+                return int(balance) / 1e6  # USDT has 6 decimals
+            elif token_name == "GOMINING":
+                return int(balance) / 1e18  # GOMINING has 18 decimals
+            else:
+                return int(balance) / 1e9  # Most tokens have 9 decimals
+
+        except Exception:
+            # Token not found or no balance
+            return 0.0
+
+    async def get_all_balances(self):
+        """Get TON and all jetton balances"""
+        balances = {}
+
+        # Get TON balance
+        ton_balance = await self.get_balance()
+        balances["TON"] = ton_balance
+
+        # Get jetton balances
+        for token_name, token_address in config.TOKENS.items():
+            if token_name != "TON":
+                try:
+                    balance = await self.get_jetton_balance(token_address, token_name)
+                    if balance > 0:
+                        balances[token_name] = balance
+                except:
+                    pass
+
+        return balances
+
     async def deploy_wallet(self):
         """Deploy wallet contract if not deployed"""
         if not self.wallet:

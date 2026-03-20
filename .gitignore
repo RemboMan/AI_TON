@@ -16,3 +16,5 @@ trades.json
 .vscode/
 .idea/
 .claude/
+holdings.json
+.ruff_cache/

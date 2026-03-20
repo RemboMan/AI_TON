@@ -1,5 +1,4 @@
-"""
-Troubleshooting Guide
+# Troubleshooting Guide
 
 ## Common Issues and Solutions
 
@@ -60,7 +59,7 @@ Solution:
 - Check API endpoints are accessible
 - Verify no rate limiting
 - Try again after a few minutes
-- Check DEX status pages
+- Check DeDust status
 
 ### 4. Wallet Issues
 
@@ -74,10 +73,10 @@ Solution:
 #### Problem: "Transaction failed"
 
 Solution:
-- Check you have enough TON for gas
+- Check you have enough TON for gas (0.3 TON per transaction)
 - Verify network isn't congested
 - Try with smaller amount
-- Check transaction on explorer
+- Check transaction on tonscan.org
 
 ### 5. AI Issues
 
@@ -99,20 +98,29 @@ Solution:
 
 ### 6. Trading Issues
 
-#### Problem: "Trade simulation only"
-
-Note: Current version simulates trades. To implement real trades:
-- See docs/dedust_integration.txt
-- See docs/stonfi_integration.txt
-- Requires additional implementation
-
-#### Problem: "DEX not responding"
+#### Problem: "Pool address not found"
 
 Solution:
-- Check DEX is operational
-- Try alternative DEX
-- Wait and retry
-- Check DEX status page
+- Token doesn't have a DeDust pool
+- Check DeDust API for pool availability
+- Add pool address to KNOWN_POOLS in dex_handler.py
+- Or use a different token
+
+#### Problem: "Reserve query failed"
+
+Solution:
+- Pool contract might be busy
+- Bot will use min_out = 1 as fallback
+- Transaction will still work but with less slippage protection
+- Try again on next cycle
+
+#### Problem: "Slippage too high"
+
+Solution:
+- Market is volatile
+- Try smaller trade amount
+- Wait for better market conditions
+- Check pool liquidity
 
 ### 7. Performance Issues
 
@@ -137,8 +145,8 @@ Solution:
 #### Problem: "No market data available"
 
 Solution:
-- Check DEX APIs are accessible
-- Verify API endpoints in config.py
+- Check DeDust API is accessible
+- Verify API endpoint in config.py
 - Try again later
 - Check API documentation for changes
 
@@ -150,15 +158,23 @@ Solution:
 - Check trades.json isn't corrupted
 - Restart bot
 
-### 9. Logging Issues
+### 9. Token Issues
 
-#### Problem: No logs appearing
+#### Problem: "Token balance not showing"
 
 Solution:
-- Check console output
-- Verify Python isn't buffering output
-- Run with: `python -u main.py`
-- Check log file permissions
+- Token might not be in your wallet yet
+- Check transaction completed on tonscan.org
+- Wait a few seconds and check again
+- Verify token address is correct
+
+#### Problem: "Cannot sell token"
+
+Solution:
+- Check you have enough tokens to sell
+- Verify token has DeDust pool
+- Check pool has enough liquidity
+- Try smaller amount
 
 ### 10. General Debugging
 
@@ -173,11 +189,6 @@ Check bot status:
 python cli.py balance
 python cli.py markets
 python cli.py trades
-```
-
-Test setup:
-```bash
-python test_setup.py
 ```
 
 ## Getting Help
@@ -208,7 +219,7 @@ rm trades.json
 python -m venv venv
 source venv/bin/activate  # or venv\Scripts\activate on Windows
 pip install -r requirements.txt
-python test_setup.py
+python check_balance.py
 ```
 
 ---
