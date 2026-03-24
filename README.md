@@ -1,5 +1,6 @@
 # TON AI Trading Bot
 **#ВНИМАНИЕ! ПРОДАЖА ТОКЕНОВ В РАЗРАБОТКЕ, НА ДАННЫЙ МОМЕНТ ФУНКЦИЯ НЕ РАБОТАЕТ ПОЛНОСТЬЮ!!!**
+
 🤖 Автономный AI-бот для торговли токенами в TON экосистеме
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
